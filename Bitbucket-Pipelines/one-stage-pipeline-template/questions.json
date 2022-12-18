@@ -1,0 +1,77 @@
+{
+  "questions": [{
+    "key": "intro",
+    "question": "\nThis template configures a pipeline that deploys a unload application to a single production stage.\n",
+    "kind": "info"
+  }, {
+    "key": "production_git_branch",
+    "question": "What is the git branch used for production deployments?",
+    "isRequired": true,
+    "allowAutofill": true,
+    "default": {
+      "keyPath": [
+        "production",
+        "production_git_branch"
+      ]
+    }
+  },{
+    "key": "production_region",
+    "question": "What is the region used for production deployments?",
+    "isRequired": true,
+    "allowAutofill": true,
+    "default": {
+      "keyPath": [
+        "production",
+        "production_region"
+      ]
+    }
+  }, {
+    "key": "production_unload_template",
+    "question": "What is the template file path for production?",
+    "isRequired": true,
+    "allowAutofill": true,
+    "default":  {
+      "keyPath": [
+        "production",
+        "production_unload_template"
+      ]
+    }
+  }, {
+    "key": "production_pipeline_execution_role",
+    "question": "What is the pipeline execution role ARN for production?",
+    "isRequired": true,
+    "allowAutofill": true,
+    "default": {
+      "keyPath": [
+        "production",
+        "production_pipeline_execution_role"
+      ]
+    }
+  }, {
+    "key": "production_unload_version",
+    "question": "What is the unload CLI version to use?",
+    "isRequired": true,
+    "allowAutofill": true,
+    "default": {
+      "keyPath": [
+        "production",
+        "production_unload_version"
+      ]
+    }
+  }, {
+    "key": "production_php_version",
+    "question": "What is php version to use?",
+    "isRequired": true,
+    "allowAutofill": true,
+    "default": {
+      "keyPath": [
+        "production",
+        "production_php_version"
+      ]
+    }
+  }, {
+    "key": "message_pipeline_configured",
+    "question": "Bitbucket pipeline has been configured successfully.\n",
+    "kind": "info"
+  }]
+}

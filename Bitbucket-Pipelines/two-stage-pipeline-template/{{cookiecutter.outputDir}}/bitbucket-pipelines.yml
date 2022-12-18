@@ -1,0 +1,57 @@
+pipelines:
+  branches:
+    { { cookiecutter.development_git_branch } }:
+      - step:
+          image: php:{{cookiecutter.development_php_version}}
+          name: Run Tests
+          script:
+            - echo "trigger the tests here"
+          services:
+            - docker
+      - step:
+          image: public.ecr.aws/sam/build-provided.al2
+          oidc: true
+          name: Deploy to Prod
+          script:
+            - export DEVELOPMENT_UNLOAD_TEMPLATE="{{cookiecutter.development_unload_template}}"
+            - export DEVELOPMENT_REGION="{{cookiecutter.development_region}}"
+            - export DEVELOPMENT_PIPELINE_EXECUTION_ROLE="{{cookiecutter.development_pipeline_execution_role}}"
+            - export DEVELOPMENT_PHP_VERSION="{{cookiecutter.development_php_version}}"
+            - export DEVELOPMENT_PHP_EXTRA_EXTENSION="php-simplexml php-pdo php-gmp php-intl"
+            - export DEVELOPMENT_UNLOAD_CLI_VERSION="{{cookiecutter.development_unload_version}}"
+
+            - source .bitbucket/assume-role.sh $DEVELOPMENT_PIPELINE_EXECUTION_ROLE unload-production-deploy $BITBUCKET_STEP_OIDC_TOKEN
+            - source .bitbucket/install-unload.sh $DEVELOPMENT_PHP_VERSION $DEVELOPMENT_UNLOAD_CLI_VERSION "$DEVELOPMENT_PHP_EXTRA_EXTENSION"
+
+            - unload deploy --config $DEVELOPMENT_UNLOAD_TEMPLATE
+          services:
+            - docker
+
+    {{ cookiecutter.production_git_branch }}:
+      - step:
+          image: php:{{cookiecutter.production_php_version}}
+          name: Run Tests
+          script:
+            - echo "trigger the tests here"
+          services:
+            - docker
+      - step:
+          image: public.ecr.aws/sam/build-provided.al2
+          oidc: true
+          name: Deploy to Prod
+          script:
+            - export PRODUCTION_UNLOAD_TEMPLATE="{{cookiecutter.production_unload_template}}"
+            - export PRODUCTION_REGION="{{cookiecutter.production_region}}"
+            - export PRODUCTION_PIPELINE_EXECUTION_ROLE="{{cookiecutter.production_pipeline_execution_role}}"
+            - export PRODUCTION_PHP_VERSION="{{cookiecutter.production_php_version}}"
+            - export PRODUCTION_PHP_EXTRA_EXTENSION="php-simplexml php-pdo php-gmp php-intl"
+            - export PRODUCTION_UNLOAD_CLI_VERSION="{{cookiecutter.production_unload_version}}"
+
+            - source .bitbucket/assume-role.sh $PRODUCTION_PIPELINE_EXECUTION_ROLE unload-production-deploy $BITBUCKET_STEP_OIDC_TOKEN
+            - source .bitbucket/install-unload.sh $PRODUCTION_PHP_VERSION $PRODUCTION_UNLOAD_CLI_VERSION "$PRODUCTION_PHP_EXTRA_EXTENSION"
+
+            - unload deploy --config $PRODUCTION_UNLOAD_TEMPLATE
+          services:
+            - docker
+          # Uncomment following line to enable approval for prod deployment.
+          # trigger: manual

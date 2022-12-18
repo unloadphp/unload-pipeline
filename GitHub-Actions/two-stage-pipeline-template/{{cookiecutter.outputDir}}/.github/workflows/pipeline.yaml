@@ -1,0 +1,86 @@
+name: Pipeline
+
+on:
+  push:
+    branches:
+      - '{{ cookiecutter.production_git_branch }}'
+      - '{{ cookiecutter.development_git_branch }}'
+
+env:
+  DEVELOPMENT_UNLOAD_TEMPLATE: {{cookiecutter.development_unload_template}}
+  DEVELOPMENT_REGION: {{cookiecutter.development_region}}
+  DEVELOPMENT_PIPELINE_EXECUTION_ROLE: {{cookiecutter.development_pipeline_execution_role}}
+  DEVELOPMENT_PHP_VERSION: {{cookiecutter.production_php_version}}
+  DEVELOPMENT_UNLOAD_CLI_VERSION: {{cookiecutter.production_unload_version}}
+  PRODUCTION_UNLOAD_TEMPLATE: {{cookiecutter.production_unload_template}}
+  PRODUCTION_REGION: {{cookiecutter.production_region}}
+  PRODUCTION_PIPELINE_EXECUTION_ROLE: {{cookiecutter.production_pipeline_execution_role}}
+  PRODUCTION_PHP_VERSION: {{cookiecutter.production_php_version}}
+  PRODUCTION_UNLOAD_CLI_VERSION: {{cookiecutter.production_unload_version}}
+
+jobs:
+  test:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          # trigger the tests here
+
+  deploy-dev:
+    if: github.ref == 'refs/heads/{{ cookiecutter.development_git_branch }}'
+    needs: [ test ]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    # Configure GitHub Action Environment to have a manual approval step before deployment to production
+    # https://docs.github.com/en/actions/reference/environments
+    # environment: <configured-environment>
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: aws-actions/setup-sam@v1
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: {{ '${{ env.DEVELOPMENT_PHP_VERSION }}' }}
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: {{ '${{ env.DEVELOPMENT_PIPELINE_EXECUTION_ROLE }}' }}
+          role-session-name: development-deployment
+          aws-region: {{ '${{ env.DEVELOPMENT_REGION }}' }}
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+      - name: Run application deployment to development environment
+        run: |
+          source .github/install-unload.sh ${DEVELOPMENT_UNLOAD_CLI_VERSION}
+          unload deploy --config ${DEVELOPMENT_UNLOAD_TEMPLATE}
+
+  deploy-prod:
+    if: github.ref == 'refs/heads/{{ cookiecutter.production_git_branch }}'
+    needs: [ test ]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    # Configure GitHub Action Environment to have a manual approval step before deployment to production
+    # https://docs.github.com/en/actions/reference/environments
+    # environment: <configured-environment>
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: aws-actions/setup-sam@v1
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: {{ '${{ env.PRODUCTION_PHP_VERSION }}' }}
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: {{ '${{ env.PRODUCTION_PIPELINE_EXECUTION_ROLE }}' }}
+          role-session-name: production-deployment
+          aws-region: {{ '${{ env.PRODUCTION_REGION }}' }}
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+      - name: Run application deployment to production environment
+        run: |
+          source .github/install-unload.sh ${PRODUCTION_UNLOAD_CLI_VERSION}
+          unload deploy --config ${PRODUCTION_UNLOAD_TEMPLATE}

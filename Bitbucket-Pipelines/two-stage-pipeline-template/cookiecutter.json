@@ -1,0 +1,15 @@
+{
+  "outputDir": ".unload-pipeline",
+  "production_unload_template": "unload.yaml",
+  "production_git_branch": "master",
+  "production_pipeline_execution_role": "",
+  "production_unload_version": "0.1.0",
+  "production_php_version": "8.1",
+  "production_region": "us-east-1",
+  "development_unload_template": "unload.development.yaml",
+  "development_git_branch": "master",
+  "development_pipeline_execution_role": "",
+  "development_unload_version": "0.1.0",
+  "development_php_version": "8.1",
+  "development_region": "us-east-1"
+}

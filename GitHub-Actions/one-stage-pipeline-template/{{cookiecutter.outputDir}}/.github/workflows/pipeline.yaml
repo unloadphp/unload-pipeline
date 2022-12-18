@@ -1,0 +1,54 @@
+name: Pipeline
+
+on:
+  push:
+    branches:
+      - '{{ cookiecutter.production_git_branch }}'
+
+env:
+  PRODUCTION_UNLOAD_TEMPLATE: {{cookiecutter.production_unload_template}}
+  PRODUCTION_REGION: {{cookiecutter.production_region}}
+  PRODUCTION_PIPELINE_EXECUTION_ROLE: {{cookiecutter.production_pipeline_execution_role}}
+  PRODUCTION_PHP_VERSION: {{cookiecutter.production_php_version}}
+  PRODUCTION_UNLOAD_CLI_VERSION: {{cookiecutter.production_unload_version}}
+
+jobs:
+  test:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: {{ '${{ env.PRODUCTION_PHP_VERSION }}' }}
+      - run: |
+          # trigger the tests here
+
+  deploy-production:
+    if: github.ref == 'refs/heads/master'
+    needs: [ test ]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    # Configure GitHub Action Environment to have a manual approval step before deployment to production
+    # https://docs.github.com/en/actions/reference/environments
+    # environment: <configured-environment>
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: aws-actions/setup-sam@v1
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: {{ '${{ env.PRODUCTION_PHP_VERSION }}' }}
+      - uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: {{ '${{ env.PRODUCTION_PIPELINE_EXECUTION_ROLE }}' }}
+          role-session-name: production-deployment
+          aws-region: {{ '${{ env.PRODUCTION_REGION }}' }}
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+      - name: Run application deployment to production environment
+        run: |
+          source .github/install-unload.sh ${PRODUCTION_UNLOAD_CLI_VERSION}
+          unload deploy --config ${PRODUCTION_UNLOAD_TEMPLATE}

@@ -36,7 +36,7 @@ if [ -f "unload" ]; then
 fi
 
 # install unload
-curl https://github.com/unloadphp/unload/releases/download/$UNLOAD_VERSION/unload -o unload
+curl -L https://github.com/unloadphp/unload/releases/download/$UNLOAD_VERSION/unload -o unload
 chmod +x unload
 mv ./unload /usr/bin/unload
 unload --version
